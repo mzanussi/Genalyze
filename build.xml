@@ -1,0 +1,125 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+
+<project name="genalyze" basedir="." default="build">
+
+	<!-- ===================================================================== -->
+	<!-- Setup some properties.                                                -->
+	<!-- ===================================================================== -->
+
+	<!-- Load the resource file. -->
+	<property file="src/resources/genalyze.properties" />
+	
+	<!-- Temporary output directory. -->
+	<property name="outputdir" value="files.ant" />
+	<property name="sourcedir" value="source.ant" />
+	
+	<!-- Retrieve version from genalyze.properties. -->
+	<property name="Version" value="${Version}" />
+
+	<!-- ===================================================================== -->
+	<!--  clean                                                                -->
+	<!--                                                                       -->
+	<!-- Clean up prior to building.                                           -->
+	<!-- ===================================================================== -->
+
+	<target name="clean">
+		
+		<!-- Remove temporary output directory. -->
+		<delete dir="${outputdir}" />
+		
+		<!-- Remove project .zip and .jar files. -->
+		<delete>
+			<fileset dir=".">
+			    <include name="${ant.project.name}-*.zip"/>
+			    <include name="${ant.project.name}.jar"/>
+			</fileset>
+		</delete>
+		
+	</target>
+
+	<!-- ===================================================================== -->
+	<!--  release                                                              -->
+	<!--                                                                       -->
+	<!-- Create the executable release.                                        -->
+	<!-- ===================================================================== -->
+
+	<target name="release">
+		
+		<!-- Copy misc files to the temporary output directory. -->
+		<mkdir dir="${outputdir}" />
+		<copy todir="${outputdir}">
+			<fileset dir="." includes="README.md" />
+			<fileset dir="." includes="runapp.bat" />
+			<fileset dir="." includes="log4j.properties" />
+			<fileset dir="." includes="lib/*.jar" />
+		</copy>
+
+		<!-- Create the JAR. -->
+		<jar destfile="${outputdir}/${ant.project.name}.jar">
+			<manifest>
+				<attribute name="Main-Class" value="com.michaelzanussi.genalyze.ui.TheApp" />
+				<attribute name="Class-Path" value="lib/log4j-1.2.15.jar" />
+			</manifest>
+			<fileset dir="bin" includes="**/*.class" />
+			<fileset dir="bin" includes="**/*.properties" />
+			<fileset dir="bin" includes="**/*.png" />
+			<fileset dir="${outputdir}" includes="**/README.md" />
+		</jar>
+		
+		<!-- Zip everything up in temporary output directory for distribution. -->
+		<zip basedir="${outputdir}" destfile="${ant.project.name}-${Version}.zip" />
+
+		<!-- Copy the JAR file to the project root for testing by runapp.bat. -->
+		<copy todir=".">
+			<fileset dir="${outputdir}" includes="${ant.project.name}.jar" />
+		</copy>
+
+		<!-- Remove temporary output directory. -->
+		<delete dir="${outputdir}" />
+		
+	</target>
+
+	<!-- ===================================================================== -->
+	<!--  source                                                               -->
+	<!--                                                                       -->
+	<!-- Package the source code.                                              -->
+	<!-- ===================================================================== -->
+
+	<target name="source">
+		
+		<!-- Copy complete Eclipse project to temporary source directory. -->
+		<mkdir dir="${sourcedir}/${ant.project.name}/" />
+		<copy todir="${sourcedir}/${ant.project.name}">
+			<fileset dir=".">
+				<include name=".classpath" />
+				<include name=".project" />
+				<include name="**/*.java" />
+				<include name="**/*.properties" />
+				<include name="**/*.xml" />
+				<include name="**/*.png" />
+				<include name="**/*.txt" />
+				<include name="**/*.bat" />
+			</fileset>
+		</copy>
+
+		<!-- Create the source archive. -->
+		<zip destfile="${ant.project.name}-${Version}-source.zip">
+			<fileset dir="${sourcedir}">
+				<include name="**/*" />
+			</fileset>
+		</zip>
+
+		<!-- Remove temporary source directory. -->
+		<delete dir="${sourcedir}" />
+		
+	</target>
+
+	<!-- ===================================================================== -->
+	<!--  build                                                                -->
+	<!--                                                                       -->
+	<!-- Main.                                                                 -->
+	<!-- ===================================================================== -->
+
+	<target name="build" depends="clean, release, source" description="build the app" />
+
+</project>
